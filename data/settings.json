@@ -1,0 +1,12 @@
+{
+    "theme": "Forest",
+    "ram": 4096,
+    "java_path": "",
+    "jvm_args": "-XX:+UseG1GC -XX:+ParallelRefProcEnabled",
+    "close_on_launch": true,
+    "selected_instance": "Vanilla",
+    "language": "ru",
+    "discord_rpc": false,
+    "window_width": 1200,
+    "window_height": 700
+}

@@ -1,0 +1,11 @@
+{
+    "name": "Vanilla",
+    "version": "26.1.2",
+    "loader": "Vanilla",
+    "ram": 4096,
+    "java_path": "",
+    "jvm_args": "",
+    "created": "2026-06-08T12:46:35",
+    "last_played": null,
+    "play_time": 0
+}
