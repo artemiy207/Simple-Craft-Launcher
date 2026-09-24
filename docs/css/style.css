@@ -173,6 +173,10 @@ section, [id] { scroll-margin-top: 84px; }
   display: flex; align-items: center; justify-content: center; padding: 24px; cursor: zoom-out;
 }
 .lightbox img { max-width: 96%; max-height: 92%; border-radius: 12px; box-shadow: var(--shadow); }
+/* ВАЖНО: правило ниже обязательное. Класс .lightbox задаёт display:flex, который
+   перебивал атрибут hidden из HTML — из-за этого лайтбокс показывался сразу при
+   загрузке страницы и перекрывал весь сайт (вместо картинки — alt «Скриншот»). */
+.lightbox[hidden] { display: none; }
 
 /* ── появление при прокрутке ────────────────────────────── */
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .45s ease, transform .45s ease; }

@@ -84,15 +84,23 @@ function initLightbox() {
   const img = document.getElementById('lightbox-img');
   if (!box || !img) return;
 
+  // Страховка: пока не открыли — лайтбокс закрыт (в CSS у .lightbox display:flex,
+  // поэтому гасим его и атрибутом, и на старте, иначе он перекроет страницу).
+  box.hidden = true;
+  box.setAttribute('aria-hidden', 'true');
+
   const open = (src, alt) => {
     img.src = src;
     img.alt = alt || 'Скриншот';
     box.hidden = false;
+    box.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   };
   const close = () => {
     box.hidden = true;
-    img.src = '';
+    box.setAttribute('aria-hidden', 'true');
+    img.removeAttribute('src');   // пустая картинка не должна тянуть запрос и рисовать alt
+    img.alt = '';
     document.body.style.overflow = '';
   };
 
