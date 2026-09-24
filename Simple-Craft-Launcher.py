@@ -74,7 +74,7 @@ def _install_requirements():
 _install_requirements()
 
 import customtkinter as ctk
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 # ─────────────────────────────────────────────────────────────
 # ПУТИ
@@ -313,6 +313,7 @@ class T:
 
     BG=PANEL=CARD=CARD_HOVER=CARD_SEL=CARD_BORDER=""
     TEXT=MUTED=ACCENT=ACCENT_H=RED=RED_H=RED_D=GREEN=""
+    ICON="#e6ecf5"
     MODE="dark"; FONT="Montserrat"
 
     @classmethod
@@ -327,6 +328,8 @@ class T:
         cls.ACCENT_H=d["ACCENT_H"]; cls.RED=d["RED"]
         cls.RED_H=d["RED_H"]; cls.RED_D=d["RED_D"]; cls.GREEN=d["GREEN"]
         cls.MODE=d["MODE"]
+        # цвет однотонных иконок: на тёмных темах — светлые, на светлых — тёмные
+        cls.ICON = "#e6ecf5" if d["MODE"] == "dark" else "#22303c"
         ctk.set_appearance_mode(cls.MODE)
 
 T.apply("Dark Slate")
@@ -348,15 +351,38 @@ _load_font()
 # ─────────────────────────────────────────────────────────────
 # ИКОНКИ
 # ─────────────────────────────────────────────────────────────
+# Что положить в assets/images: PNG с прозрачным фоном, однотонный глиф
+# (лаунчер сам перекрасит его под тему — тёмная тема → белый, светлая → тёмный).
+# размер в скобках — как иконка отрисовывается в интерфейсе.
+REQUIRED_ICONS = {
+    "logo.png":      ((34, 34), "логотип в топбаре"),
+    "add.png":       ((18, 18), "кнопки «Добавить» и «Новая сборка» (плюс)"),
+    "settings.png":  ((18, 18), "настройки лаунчера и сборки (шестерёнка)"),
+    "folders.png":   ((18, 18), "кнопки «Папки» / «Открыть папку»"),
+    "console.png":   ((18, 18), "кнопка «Консоль» (терминал)"),
+    "play.png":      ((18, 18), "все кнопки «Играть» (треугольник)"),
+    "stop.png":      ((18, 18), "кнопки «Остановить» и «Игра идёт» (квадрат)"),
+    "mods.png":      ((18, 18), "кнопка «Открыть mods» (пазл)"),
+    "edit.png":      ((18, 18), "кнопка «Переименовать» (карандаш)"),
+    "delete.png":    ((18, 18), "кнопка «Удалить» (корзина)"),
+    "user.png":      ((18, 18), "аккаунт: кнопка внизу и строки в списке"),
+    "refresh.png":   ((16, 16), "кнопка «Обновить версии» (стрелки по кругу)"),
+    "box_icon.png":  ((34, 34), "иконка сборки по умолчанию (лучше 256x256)"),
+    "app_icon.ico":  ((0, 0),   "иконка окна и EXE (ico, 256x256)"),
+}
+
+def missing_icons() -> list:
+    """Файлы иконок, которых пока нет в assets/images (не критично — будет текст)."""
+    return [name for name in REQUIRED_ICONS
+            if not os.path.exists(asset(os.path.join("assets", "images", name)))]
+
 _ICON_CACHE: dict[str, ctk.CTkImage] = {}
 
-def _to_white(img: Image.Image) -> Image.Image:
+def _tint(img: Image.Image, color: str) -> Image.Image:
+    """Перекрашивает однотонную иконку в нужный цвет (для тёмных и светлых тем)."""
     img = img.convert("RGBA")
-    px  = img.getdata()
-    img.putdata([
-        (255, 255, 255, a) if (r < 120 and g < 120 and b < 120) else (r, g, b, a)
-        for r, g, b, a in px
-    ])
+    rgb = ImageColor.getrgb(color)
+    img.putdata([(rgb[0], rgb[1], rgb[2], a) for _r, _g, _b, a in img.getdata()])
     return img
 
 def _make_placeholder(size=(20,20)) -> Image.Image:
@@ -366,18 +392,26 @@ def _make_placeholder(size=(20,20)) -> Image.Image:
     draw.ellipse([2,2,s-3,s-3], fill=(255,255,255,180))
     return img
 
-def load_icon(filename: str, size=(20,20)) -> ctk.CTkImage:
-    key = f"{filename}_{size}"
+def load_icon(filename: str, size=(20,20), color: str | None = None) -> ctk.CTkImage:
+    """Иконка из assets/images, перекрашенная под текущую тему."""
+    tint = color or getattr(T, "ICON", "#e6ecf5")
+    key  = f"{filename}_{size}_{tint}"
     if key in _ICON_CACHE:
         return _ICON_CACHE[key]
     path = asset(os.path.join("assets","images",filename))
     try:
-        img = _to_white(Image.open(path))
+        img = _tint(Image.open(path), tint)
     except Exception:
         img = _make_placeholder(size)
     ci = ctk.CTkImage(light_image=img, dark_image=img, size=size)
     _ICON_CACHE[key] = ci
     return ci
+
+def load_icon_opt(filename: str, size=(18,18), color: str | None = None):
+    """Иконка, если файл существует; иначе None — кнопка станет просто текстовой."""
+    if not os.path.exists(asset(os.path.join("assets","images",filename))):
+        return None
+    return load_icon(filename, size, color)
 
 def load_instance_icon(instance_name: str, size=(56,56)) -> ctk.CTkImage:
     """Пробует загрузить icon.png инстанса, иначе box_icon.png."""
@@ -843,8 +877,11 @@ class InstanceCard(ctk.CTkFrame):
         self._lbl_state.pack(pady=(2,0))
 
         # ── кнопка быстрого запуска ──────────────────────────
+        ico_play = load_icon_opt("play.png", (14,14))
         self._btn_play = ctk.CTkButton(self,
-            text="▶  Играть", width=112, height=28,
+            text="Играть", width=112, height=28,
+            image=ico_play,
+            compound="left" if ico_play else "center",
             corner_radius=8, font=font(11,"bold"),
             fg_color=T.ACCENT, hover_color=T.ACCENT_H,
             command=self._quick_play)
@@ -868,10 +905,10 @@ class InstanceCard(ctk.CTkFrame):
     def set_installed(self, installed: bool, note: str = ""):
         """Индикатор «установлена / нет» на карточке."""
         if installed:
-            text = "✔  установлена" + (f" • {note}" if note else "")
+            text = "Установлена" + (f" • {note}" if note else "")
             self._lbl_state.configure(text=text, text_color=T.GREEN)
         else:
-            self._lbl_state.configure(text="○  не установлена", text_color=T.MUTED)
+            self._lbl_state.configure(text="Не установлена", text_color=T.MUTED)
 
     def _click(self,_e):  self.on_select(self.data)
     def _dbl(self,_e):    self.on_play(self.data)
@@ -888,12 +925,14 @@ class InstanceCard(ctk.CTkFrame):
                        activebackground=T.CARD_HOVER,
                        activeforeground=T.TEXT,
                        bd=0, relief="flat")
-        menu.add_command(label="▶  Играть",        command=lambda: self.on_play(self.data))
-        menu.add_command(label="🔧  Настройки",     command=lambda: self.on_select(self.data, open_settings=True))
+        menu.add_command(label="Играть",       command=lambda: self.on_play(self.data))
+        menu.add_command(label="Настройки",    command=lambda: self.on_select(self.data, open_settings=True))
         menu.add_separator()
-        menu.add_command(label="📁  Открыть папку", command=lambda: open_folder(InstanceMgr.path(self.data["name"])))
+        menu.add_command(label="Открыть папку", command=lambda: open_folder(InstanceMgr.path(self.data["name"])))
+        menu.add_command(label="Открыть mods",  command=lambda: open_folder(
+            os.path.join(InstanceMgr.path(self.data["name"]), "mods")))
         menu.add_separator()
-        menu.add_command(label="🗑  Удалить",        command=lambda: self.on_select(self.data, delete=True))
+        menu.add_command(label="Удалить",      command=lambda: self.on_select(self.data, delete=True))
         try: menu.tk_popup(e.x_root, e.y_root)
         finally: menu.grab_release()
 
@@ -943,8 +982,10 @@ class _BaseDialog(ctk.CTkToplevel):
         except Exception:
             pass
 
-    def _header(self, text: str):
-        ctk.CTkLabel(self, text=text,
+    def _header(self, text: str, icon: str | None = None):
+        img = load_icon_opt(icon, (20,20)) if icon else None
+        ctk.CTkLabel(self, text=text, image=img,
+                     compound="left" if img else "center",
                      font=font(20,"bold")).pack(pady=(22,16))
 
     def _btn_row(self, ok_text="Создать", ok_cmd=None, cancel_cmd=None):
@@ -970,7 +1011,7 @@ class CreateInstanceDialog(_BaseDialog):
         self._build()
 
     def _build(self):
-        self._header("Создание сборки")
+        self._header("Создание сборки", "add.png")
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=24)
 
@@ -1040,7 +1081,7 @@ class InstanceSettingsDialog(_BaseDialog):
         self._build()
 
     def _build(self):
-        self._header(f"⚙  {self.data['name']}")
+        self._header(self.data['name'], "settings.png")
 
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
         scroll.pack(fill="both", expand=True, padx=24)
@@ -1130,7 +1171,7 @@ class AccountsDialog(_BaseDialog):
         self._build()
 
     def _build(self):
-        self._header("👤  Аккаунты")
+        self._header("Аккаунты", "user.png")
 
         self._list = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self._list.pack(fill="both", expand=True, padx=20)
@@ -1153,8 +1194,10 @@ class AccountsDialog(_BaseDialog):
             row = ctk.CTkFrame(self._list,
                 fg_color=T.CARD, corner_radius=8)
             row.pack(fill="x", pady=4)
+            ico_user = load_icon_opt("user.png", (16,16))
             ctk.CTkLabel(row,
-                text=f"👤  {acc['name']}",
+                text=f"  {acc['name']}" if ico_user else acc["name"],
+                image=ico_user, compound="left" if ico_user else "center",
                 font=font(13)
             ).pack(side="left", padx=12, pady=10)
             ctk.CTkLabel(row,
@@ -1165,7 +1208,10 @@ class AccountsDialog(_BaseDialog):
                 fg_color=T.ACCENT, hover_color=T.ACCENT_H,
                 command=lambda a=acc: self._select(a)
             ).pack(side="right", padx=6)
-            ctk.CTkButton(row, text="✕", width=32,
+            ico_del = load_icon_opt("delete.png", (14,14))
+            ctk.CTkButton(row, text="×" if ico_del else "Удалить",
+                width=32 if ico_del else 76,
+                image=ico_del, compound="center",
                 fg_color=T.RED_D, hover_color=T.RED_H,
                 command=lambda n=acc["name"]: self._delete(n)
             ).pack(side="right", padx=(0,4))
@@ -1201,7 +1247,7 @@ class GlobalSettingsDialog(_BaseDialog):
         self._build()
 
     def _build(self):
-        self._header("⚙  Настройки лаунчера")
+        self._header("Настройки лаунчера", "settings.png")
 
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
         scroll.pack(fill="both", expand=True, padx=24)
@@ -1383,16 +1429,65 @@ class App(ctk.CTk):
 
     # ────────────────────────────────────────────────────────
     def _preload_icons(self):
-        self._ico_add      = load_icon("add.png",      (18,18))
-        self._ico_settings = load_icon("settings.png", (18,18))
-        self._ico_folders  = load_icon("folders.png",  (18,18))
-        self._ico_logo     = load_icon("logo.png",     (34,34))
+        """Иконки кнопок. Если файла нет — кнопка просто станет текстовой."""
+        self._ico_logo     = load_icon_opt("logo.png",     (34,34)) \
+            or load_icon("box_icon.png", (34,34))
+        self._ico_add      = load_icon_opt("add.png",      (18,18))
+        self._ico_settings = load_icon_opt("settings.png", (18,18))
+        self._ico_folders  = load_icon_opt("folders.png",  (18,18))
+        self._ico_console  = load_icon_opt("console.png",  (18,18))
+        self._ico_play     = load_icon_opt("play.png",     (18,18))
+        self._ico_stop     = load_icon_opt("stop.png",     (18,18))
+        self._ico_mods     = load_icon_opt("mods.png",     (18,18))
+        self._ico_edit     = load_icon_opt("edit.png",     (18,18))
+        self._ico_delete   = load_icon_opt("delete.png",   (18,18))
+        self._ico_user     = load_icon_opt("user.png",     (18,18))
+        self._ico_refresh  = load_icon_opt("refresh.png",  (16,16))
+
+        missing = missing_icons()
+        if missing:
+            log.log("Нет файлов иконок в assets/images: " + ", ".join(missing)
+                    + " — эти кнопки показаны без иконок", "WARN")
+
+    # ────────────────────────────────────────────────────────
+    # КНОПКИ ЗАПУСКА (единое состояние сайдбара и нижней панели)
+    # ────────────────────────────────────────────────────────
+    PLAY_STATES = {
+        "play":    ("Играть",       "play", "ACCENT", True),
+        "stop":    ("Остановить",   "stop", "RED",    True),
+        "running": ("Игра идёт",    "stop", "GREEN",  True),
+        "busy":    ("Запуск...",    None,   "ACCENT", False),
+        "install": ("Установка...", None,   "ACCENT", False),
+    }
+
+    def _set_play_state(self, state: str):
+        text, icon_name, color_name, enabled = self.PLAY_STATES.get(
+            state, self.PLAY_STATES["play"])
+        color = getattr(T, color_name, T.ACCENT)
+        hover = {"ACCENT": T.ACCENT_H, "RED": T.RED_H, "GREEN": T.GREEN}.get(color_name, color)
+        icon  = getattr(self, f"_ico_{icon_name}", None) if icon_name else None
+        if icon is None and icon_name == "stop":
+            icon = self._ico_play
+
+        for btn in (getattr(self, "_btn_play", None),
+                    getattr(self, "_sb_play", None)):
+            if btn is None:
+                continue
+            try:
+                btn.configure(
+                    text=text.upper() if btn is self._btn_play else text,
+                    fg_color=color, hover_color=hover,
+                    image=icon, compound="left" if icon else "center",
+                    state="normal" if enabled else "disabled")
+            except Exception:
+                pass
 
     # ────────────────────────────────────────────────────────
     def _build_ui(self):
         self._build_topbar()
         self._build_body()
         self._bind_shortcuts()
+        self._set_play_state("running" if self.game_running else "play")
 
     def _bind_shortcuts(self):
         """Горячие клавиши: F5/Ctrl+R — обновить версии, Ctrl+N — новая сборка,
@@ -1446,7 +1541,7 @@ class App(ctk.CTk):
                cmd=lambda: open_folder(INSTANCES_DIR)
                ).pack(side="left", padx=4)
 
-        tb_btn("Консоль", None,
+        tb_btn("Консоль", self._ico_console,
                cmd=self._open_console
                ).pack(side="left", padx=4)
 
@@ -1509,32 +1604,34 @@ class App(ctk.CTk):
         self._sb_content.pack(pady=(0,14))
 
         # ── кнопки ─────────────────────────────────────────
-        def sb_btn(text, color=None, hover=None, cmd=None, height=36):
+        def sb_btn(text, color=None, hover=None, cmd=None, height=36, icon=None):
             return ctk.CTkButton(self.sidebar,
                 text=text, height=height, corner_radius=8,
+                image=icon, compound="left" if icon else "center",
                 fg_color=color or T.CARD,
                 hover_color=hover or T.CARD_HOVER,
                 font=font(12), command=cmd)
 
-        self._sb_play = sb_btn("▶  Играть",
-            T.ACCENT, T.ACCENT_H, self._toggle_game, height=42)
+        self._sb_play = sb_btn("Играть",
+            T.ACCENT, T.ACCENT_H, self._toggle_game, height=42,
+            icon=self._ico_play)
         self._sb_play.pack(fill="x", padx=18, pady=(0,6))
 
-        sb_btn("🔧  Настройки сборки",
+        sb_btn("Настройки сборки", icon=self._ico_settings,
                cmd=lambda: self._open_instance_settings()
                ).pack(fill="x", padx=18, pady=2)
 
-        sb_btn("📁  Открыть папку",
+        sb_btn("Открыть папку", icon=self._ico_folders,
                cmd=lambda: open_folder(
                    InstanceMgr.path(self.current_instance["name"])
                    if self.current_instance else INSTANCES_DIR)
                ).pack(fill="x", padx=18, pady=2)
 
-        sb_btn("🧩  Открыть mods",
+        sb_btn("Открыть mods", icon=self._ico_mods,
                cmd=self._open_mods_folder
                ).pack(fill="x", padx=18, pady=2)
 
-        sb_btn("✏  Переименовать",
+        sb_btn("Переименовать", icon=self._ico_edit,
                cmd=self._rename_instance
                ).pack(fill="x", padx=18, pady=2)
 
@@ -1543,8 +1640,8 @@ class App(ctk.CTk):
                      fg_color=T.CARD_HOVER
                      ).pack(fill="x", padx=18, pady=10)
 
-        sb_btn("🗑  Удалить",
-               T.RED_D, T.RED_H, self._delete_instance
+        sb_btn("Удалить", T.RED_D, T.RED_H, self._delete_instance,
+               icon=self._ico_delete
                ).pack(fill="x", padx=18, pady=2)
 
     # ── ЦЕНТР ───────────────────────────────────────────────
@@ -1565,8 +1662,10 @@ class App(ctk.CTk):
         self._library_stats.pack(side="left", padx=(10,0), pady=(6,0))
 
         ctk.CTkButton(header,
-            text="⟳  Обновить версии",
+            text="Обновить версии",
             width=152, height=30, corner_radius=8,
+            image=self._ico_refresh,
+            compound="left" if self._ico_refresh else "center",
             fg_color=T.CARD, hover_color=T.CARD_HOVER,
             font=font(11), text_color=T.TEXT,
             command=self._refresh_versions_async
@@ -1580,7 +1679,7 @@ class App(ctk.CTk):
         self._search_var.trace_add("write", self._on_search)
         self._search_entry = ctk.CTkEntry(top,
             textvariable=self._search_var,
-            placeholder_text="🔍  Поиск сборок...",
+            placeholder_text="Поиск сборок...",
             font=font(13), height=36)
         self._search_entry.pack(side="left", fill="x", expand=True, padx=(0,8))
 
@@ -1611,8 +1710,11 @@ class App(ctk.CTk):
         bottom.pack_propagate(False)
 
         # аккаунт
+        ico_user = self._ico_user or load_icon_opt("user.png", (18,18))
         self._btn_account = ctk.CTkButton(bottom,
-            text=f"👤  {self.current_account['name']}  ▾",
+            text=f"  {self.current_account['name']}" if ico_user
+                 else self.current_account['name'],
+            image=ico_user, compound="left" if ico_user else "center",
             height=40, corner_radius=8, width=180,
             fg_color=T.CARD, hover_color=T.CARD_HOVER,
             font=font(12),
@@ -1639,7 +1741,9 @@ class App(ctk.CTk):
 
         # большая кнопка ИГРАТЬ
         self._btn_play = ctk.CTkButton(bottom,
-            text="  ИГРАТЬ  ",
+            text="ИГРАТЬ",
+            image=self._ico_play,
+            compound="left" if self._ico_play else "center",
             width=220, height=46, corner_radius=10,
             fg_color=T.ACCENT, hover_color=T.ACCENT_H,
             font=font(15,"bold"),
@@ -1723,7 +1827,9 @@ class App(ctk.CTk):
             font=font(11), text_color=T.MUTED
         ).pack(padx=34, pady=(0,14))
         ctk.CTkButton(box,
-            text="＋  Новая сборка",
+            text="Новая сборка",
+            image=self._ico_add,
+            compound="left" if self._ico_add else "center",
             fg_color=T.ACCENT, hover_color=T.ACCENT_H,
             font=font(12,"bold"),
             command=self._open_create_dialog
@@ -1756,7 +1862,7 @@ class App(ctk.CTk):
         pt = data.get("play_time", 0)
         if pt:
             h, m = divmod(pt//60, 60)
-            self._sb_time.configure(text=f"🕒 Наиграно: {h}ч {m}м")
+            self._sb_time.configure(text=f"Наиграно: {h} ч {m} мин")
         else:
             self._sb_time.configure(text="Ещё не запускалась")
 
@@ -1938,8 +2044,7 @@ class App(ctk.CTk):
     def _install_then_play(self, inst: dict):
         self._show_progress(True)
         self._progress.update(0.0, "Игра не установлена — начинаю установку...")
-        self._btn_play.configure(text="  УСТАНОВКА...  ", state="disabled")
-        self._sb_play.configure(text="Установка...", state="disabled")
+        self._set_play_state("install")
         log.log(f"Автоустановка перед запуском: {inst['name']} [{inst.get('loader','')} {inst.get('version','')}]")
 
         def worker():
@@ -1950,8 +2055,7 @@ class App(ctk.CTk):
 
     def _on_auto_install_done(self, ok: bool, inst: dict):
         self._show_progress(False)
-        self._btn_play.configure(text="  ИГРАТЬ  ", state="normal", fg_color=T.ACCENT)
-        self._sb_play.configure(text="▶  Играть", state="normal", fg_color=T.ACCENT)
+        self._set_play_state("play")
 
         if not ok:
             err = CoreBridge.get_last_error() or "неизвестная ошибка"
@@ -1970,8 +2074,7 @@ class App(ctk.CTk):
         log.log(f"Запуск: {inst['name']} от {acc['name']}")
 
         # запускаем в потоке: подбор/скачивание Java и старт Java-процесса
-        self._btn_play.configure(text="  ЗАПУСК...  ", state="disabled")
-        self._sb_play.configure(text="Запуск...", state="disabled", fg_color=T.ACCENT)
+        self._set_play_state("busy")
 
         def worker():
             proc = CoreBridge.launch(inst, acc)
@@ -1985,8 +2088,7 @@ class App(ctk.CTk):
         if proc is None:
             err = CoreBridge.get_last_error() or "не удалось запустить Java-процесс"
             log.log(f"Запуск не выполнен: {err}", "ERROR")
-            self._btn_play.configure(text="  ИГРАТЬ  ", fg_color=T.ACCENT)
-            self._sb_play.configure(text="▶  Играть", state="normal", fg_color=T.ACCENT)
+            self._set_play_state("play")
             messagebox.showerror("SCL",
                 "Не удалось запустить игру.\n\n"
                 f"{err}\n\n"
@@ -1997,8 +2099,7 @@ class App(ctk.CTk):
 
         self.game_proc    = proc
         self.game_running = True
-        self._btn_play.configure(text="  ИГРА ИДЁТ  ", fg_color=T.GREEN)
-        self._sb_play.configure(text="■  Остановить", fg_color=T.RED)
+        self._set_play_state("running")
 
         import datetime
         inst["last_played"] = datetime.datetime.now().isoformat(timespec="seconds")
@@ -2052,8 +2153,7 @@ class App(ctk.CTk):
         log.log("Игра остановлена")
         self.game_running = False
         self.game_proc    = None
-        self._btn_play.configure(text="  ИГРАТЬ  ", fg_color=T.ACCENT)
-        self._sb_play.configure(text="▶  Играть", fg_color=T.ACCENT)
+        self._set_play_state("play")
         if self.cfg.get("close_on_launch"):
             self.deiconify()
 
@@ -2065,7 +2165,8 @@ class App(ctk.CTk):
 
     def _on_account_selected(self, acc: dict):
         self.current_account = acc
-        self._btn_account.configure(text=f"👤  {acc['name']}  ▾")
+        ico = getattr(self, "_ico_user", None)
+        self._btn_account.configure(text=f"  {acc['name']}" if ico else acc["name"])
         self._lbl_acc_type.configure(
             text=f"({acc.get('type','offline')})")
         log.log(f"Выбран аккаунт: {acc['name']}")
@@ -2115,16 +2216,11 @@ class App(ctk.CTk):
         self.cards.clear()
         self.configure(fg_color=T.BG)
 
+        self._preload_icons()        # иконки перекрашиваются под новую тему
         self._build_ui()
         self._reload_instances(select_name=selected)
         self._update_env_async()              # строка Python/Java заполняется заново
-
-        if self.game_running:                 # не теряем состояние «игра идёт»
-            try:
-                self._btn_play.configure(text="  ИГРА ИДЁТ  ", fg_color=T.GREEN)
-                self._sb_play.configure(text="■  Остановить", fg_color=T.RED)
-            except Exception:
-                pass
+        self._set_play_state("running" if self.game_running else "play")
 
     def _set_status(self, text: str):
         if hasattr(self, "_lbl_bottom_status"):
