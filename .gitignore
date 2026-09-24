@@ -2,6 +2,9 @@
 .aider*
 .aider.tags.cache.v4/
 
+# Служебный вывод проверки сайта (_verify_site.py)
+_vs.txt
+
 # Python
 __pycache__/
 *.py[cod]
