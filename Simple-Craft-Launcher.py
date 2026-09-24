@@ -212,11 +212,104 @@ THEMES = {
         "RED": "#ef4444", "RED_H": "#dc2626", "RED_D": "#fecaca",
         "GREEN": "#16a34a", "MODE": "light",
     },
+    "Nord": {
+        "BG": "#2e3440", "PANEL": "#3b4252", "CARD": "#434c5e",
+        "CARD_HOVER": "#4c566a", "CARD_SEL": "#3a4a63", "CARD_BORDER": "#88c0d0",
+        "TEXT": "#eceff4", "MUTED": "#a3adc2",
+        "ACCENT": "#88c0d0", "ACCENT_H": "#79a9b8",
+        "RED": "#bf616a", "RED_H": "#a8505a", "RED_D": "#4b2b2f",
+        "GREEN": "#a3be8c", "MODE": "dark",
+    },
+    "Dracula": {
+        "BG": "#1e1f29", "PANEL": "#282a36", "CARD": "#343746",
+        "CARD_HOVER": "#3f4256", "CARD_SEL": "#443a5c", "CARD_BORDER": "#bd93f9",
+        "TEXT": "#f8f8f2", "MUTED": "#a0a4b8",
+        "ACCENT": "#bd93f9", "ACCENT_H": "#a97fe8",
+        "RED": "#ff5555", "RED_H": "#e03e3e", "RED_D": "#4d1d22",
+        "GREEN": "#50fa7b", "MODE": "dark",
+    },
+    "Sunset": {
+        "BG": "#1a1113", "PANEL": "#241618", "CARD": "#2f1d20",
+        "CARD_HOVER": "#3d2629", "CARD_SEL": "#492a20", "CARD_BORDER": "#ff7b54",
+        "TEXT": "#ffe8dd", "MUTED": "#c9a08f",
+        "ACCENT": "#ff7b54", "ACCENT_H": "#e8663f",
+        "RED": "#f2545b", "RED_H": "#d43b42", "RED_D": "#4d1a1c",
+        "GREEN": "#7bd88f", "MODE": "dark",
+    },
+    "Ocean": {
+        "BG": "#071a22", "PANEL": "#0c2530", "CARD": "#12323f",
+        "CARD_HOVER": "#173f4f", "CARD_SEL": "#0f3d4d", "CARD_BORDER": "#22d3ee",
+        "TEXT": "#d7f5fb", "MUTED": "#7fb8c7",
+        "ACCENT": "#22d3ee", "ACCENT_H": "#0ea5c4",
+        "RED": "#f87171", "RED_H": "#dc2626", "RED_D": "#4a1d1d",
+        "GREEN": "#34d399", "MODE": "dark",
+    },
+    "Coffee": {
+        "BG": "#17120e", "PANEL": "#211a15", "CARD": "#2c231c",
+        "CARD_HOVER": "#3a2e25", "CARD_SEL": "#3c2c1f", "CARD_BORDER": "#c8a27a",
+        "TEXT": "#f3e6d8", "MUTED": "#a9927d",
+        "ACCENT": "#c8a27a", "ACCENT_H": "#b08c62",
+        "RED": "#e07a5f", "RED_H": "#c2603f", "RED_D": "#4d2417",
+        "GREEN": "#a3b18a", "MODE": "dark",
+    },
+    "Cyberpunk": {
+        "BG": "#0b0812", "PANEL": "#150f22", "CARD": "#1f1633",
+        "CARD_HOVER": "#2a1e45", "CARD_SEL": "#3a1160", "CARD_BORDER": "#ff2e97",
+        "TEXT": "#f2e9ff", "MUTED": "#a08fc0",
+        "ACCENT": "#ff2e97", "ACCENT_H": "#e01f83",
+        "RED": "#ff5c5c", "RED_H": "#e03e3e", "RED_D": "#4d1030",
+        "GREEN": "#00f5a0", "MODE": "dark",
+    },
+    "Monokai": {
+        "BG": "#1f1f1c", "PANEL": "#272822", "CARD": "#31322b",
+        "CARD_HOVER": "#3d3e35", "CARD_SEL": "#3b3a26", "CARD_BORDER": "#f4bf75",
+        "TEXT": "#f8f8f2", "MUTED": "#a9a99a",
+        "ACCENT": "#f4bf75", "ACCENT_H": "#e0a95a",
+        "RED": "#f92672", "RED_H": "#d81e60", "RED_D": "#4d1a2e",
+        "GREEN": "#a6e22e", "MODE": "dark",
+    },
+    "Blood Moon": {
+        "BG": "#120a0c", "PANEL": "#1c0f12", "CARD": "#26141a",
+        "CARD_HOVER": "#331b22", "CARD_SEL": "#3d1418", "CARD_BORDER": "#ff4d4d",
+        "TEXT": "#ffe3e3", "MUTED": "#b9888f",
+        "ACCENT": "#ff4d4d", "ACCENT_H": "#e03636",
+        "RED": "#ff4d4d", "RED_H": "#d92d2d", "RED_D": "#421111",
+        "GREEN": "#79d17a", "MODE": "dark",
+    },
+    "Sakura": {
+        "BG": "#fdf2f6", "PANEL": "#fbe4ec", "CARD": "#ffffff",
+        "CARD_HOVER": "#f6d7e3", "CARD_SEL": "#fbe0ea", "CARD_BORDER": "#f472b6",
+        "TEXT": "#3f2b35", "MUTED": "#9b7b8a",
+        "ACCENT": "#f472b6", "ACCENT_H": "#e0509f",
+        "RED": "#ef4444", "RED_H": "#dc2626", "RED_D": "#f9c9d8",
+        "GREEN": "#12a06b", "MODE": "light",
+    },
+    "Mint": {
+        "BG": "#effaf6", "PANEL": "#dff5ec", "CARD": "#ffffff",
+        "CARD_HOVER": "#cdeee1", "CARD_SEL": "#d7f5e8", "CARD_BORDER": "#10b981",
+        "TEXT": "#14342b", "MUTED": "#5f8b7c",
+        "ACCENT": "#10b981", "ACCENT_H": "#0d9668",
+        "RED": "#ef4444", "RED_H": "#dc2626", "RED_D": "#f7d0d0",
+        "GREEN": "#16a34a", "MODE": "light",
+    },
 }
+
+# Цвета бейджей загрузчиков — подобраны так, чтобы читаться в любой теме
+LOADER_COLORS = {
+    "Vanilla":  "#4ade80",
+    "Fabric":   "#dbb69b",
+    "Forge":    "#f59e0b",
+    "NeoForge": "#fb7185",
+    "Quilt":    "#c084fc",
+}
+
+def loader_color(loader: str) -> str:
+    return LOADER_COLORS.get(loader or "Vanilla", "#94a3b8")
 
 class T:
     """Активная тема — singleton с горячей заменой."""
     _d = THEMES["Dark Slate"].copy()
+    NAME = "Dark Slate"
 
     BG=PANEL=CARD=CARD_HOVER=CARD_SEL=CARD_BORDER=""
     TEXT=MUTED=ACCENT=ACCENT_H=RED=RED_H=RED_D=GREEN=""
@@ -225,6 +318,7 @@ class T:
     @classmethod
     def apply(cls, name: str):
         d = THEMES.get(name, THEMES["Dark Slate"])
+        cls.NAME = name if name in THEMES else "Dark Slate"
         cls._d = d.copy()
         cls.BG=d["BG"]; cls.PANEL=d["PANEL"]; cls.CARD=d["CARD"]
         cls.CARD_HOVER=d["CARD_HOVER"]; cls.CARD_SEL=d["CARD_SEL"]
@@ -711,7 +805,7 @@ def open_folder(path: str):
 class InstanceCard(ctk.CTkFrame):
     def __init__(self, parent, data: dict, on_select, on_play):
         super().__init__(parent,
-            width=200, height=210,
+            width=206, height=246,
             fg_color=T.CARD, corner_radius=12,
             border_width=2, border_color=T.CARD)
         self.data      = data
@@ -722,24 +816,31 @@ class InstanceCard(ctk.CTkFrame):
 
         self._ico = load_instance_icon(data.get("name",""), size=(58,58))
         self._lbl_ico = ctk.CTkLabel(self, image=self._ico, text="")
-        self._lbl_ico.pack(pady=(16,6))
+        self._lbl_ico.pack(pady=(14,6))
 
         self._lbl_name = ctk.CTkLabel(self,
             text=data.get("name","?"),
-            font=font(13,"bold"), wraplength=165)
+            font=font(13,"bold"), wraplength=170)
         self._lbl_name.pack()
 
         loader  = data.get("loader","Vanilla")
         version = data.get("version","")
         self._lbl_ver = ctk.CTkLabel(self,
-            text=f"{loader} {version}",
-            text_color=T.MUTED, font=font(11))
-        self._lbl_ver.pack(pady=(2,0))
+            text=f" {loader} {version} ",
+            text_color="#101418",
+            fg_color=loader_color(loader), corner_radius=6,
+            font=font(10,"bold"), height=20)
+        self._lbl_ver.pack(pady=(6,0))
 
         self._lbl_ram = ctk.CTkLabel(self,
             text=f"RAM {effective_ram_mb(data)} МБ",
             text_color=T.MUTED, font=font(10))
-        self._lbl_ram.pack(pady=(2,0))
+        self._lbl_ram.pack(pady=(4,0))
+
+        # статус установки — заполняется из App.set_installed()
+        self._lbl_state = ctk.CTkLabel(self, text="",
+            text_color=T.MUTED, font=font(9))
+        self._lbl_state.pack(pady=(2,0))
 
         # ── кнопка быстрого запуска ──────────────────────────
         self._btn_play = ctk.CTkButton(self,
@@ -749,7 +850,8 @@ class InstanceCard(ctk.CTkFrame):
             command=self._quick_play)
         self._btn_play.pack(pady=(9,0))
 
-        for w in (self, self._lbl_ico, self._lbl_name, self._lbl_ver, self._lbl_ram):
+        for w in (self, self._lbl_ico, self._lbl_name, self._lbl_ver,
+                  self._lbl_ram, self._lbl_state):
             w.bind("<Button-1>",        self._click)
             w.bind("<Double-Button-1>", self._dbl)
             w.bind("<Enter>",           self._enter)
@@ -763,13 +865,23 @@ class InstanceCard(ctk.CTkFrame):
         else:
             self.configure(fg_color=T.CARD, border_color=T.CARD)
 
+    def set_installed(self, installed: bool, note: str = ""):
+        """Индикатор «установлена / нет» на карточке."""
+        if installed:
+            text = "✔  установлена" + (f" • {note}" if note else "")
+            self._lbl_state.configure(text=text, text_color=T.GREEN)
+        else:
+            self._lbl_state.configure(text="○  не установлена", text_color=T.MUTED)
+
     def _click(self,_e):  self.on_select(self.data)
     def _dbl(self,_e):    self.on_play(self.data)
     def _quick_play(self): self.on_play(self.data)
     def _enter(self,_e):
-        if not self.selected: self.configure(fg_color=T.CARD_HOVER)
+        if not self.selected:
+            self.configure(fg_color=T.CARD_HOVER, border_color=T.CARD_BORDER)
     def _leave(self,_e):
-        if not self.selected: self.configure(fg_color=T.CARD)
+        if not self.selected:
+            self.configure(fg_color=T.CARD, border_color=T.CARD)
     def _rclick(self, e):
         menu = tk.Menu(self, tearoff=0,
                        bg=T.CARD, fg=T.TEXT,
@@ -1104,11 +1216,12 @@ class GlobalSettingsDialog(_BaseDialog):
                              ).pack(fill="x")
 
         # ── Тема ───────────────────────────────────────────
-        row("Тема оформления")
+        row("Тема оформления", f"{len(THEMES)} тем • применяется сразу, без перезапуска")
         self._theme = ctk.CTkComboBox(scroll,
             values=list(THEMES.keys()), font=font(13),
             button_color=T.ACCENT, button_hover_color=T.ACCENT_H,
-            border_color=T.CARD_HOVER)
+            border_color=T.CARD_HOVER,
+            command=self._preview_theme)
         self._theme.set(self.cfg.get("theme","Dark Slate"))
         self._theme.pack(fill="x")
 
@@ -1174,6 +1287,14 @@ class GlobalSettingsDialog(_BaseDialog):
         self._discord_sw.pack(anchor="w", pady=(8,0))
 
         self._btn_row("Сохранить", self._submit)
+
+    def _preview_theme(self, name: str):
+        """Мгновенный предпросмотр: тема применяется к главному окну сразу."""
+        if name not in THEMES:
+            return
+        app = self.master
+        if hasattr(app, "_apply_theme"):
+            app._apply_theme(name, save=False)
 
     def _ram_slide(self, v):
         self._ram_lbl.configure(text=f"{int(v)} МБ")
@@ -1255,6 +1376,7 @@ class App(ctk.CTk):
         self._build_ui()
         self._reload_instances()
         self._refresh_versions_async()
+        self._update_env_async()
 
         log.log(f"Simple Craft Launcher v{self.VERSION} запущен")
         log.log(f"Тема: {self.cfg.get('theme')}")
@@ -1264,36 +1386,57 @@ class App(ctk.CTk):
         self._ico_add      = load_icon("add.png",      (18,18))
         self._ico_settings = load_icon("settings.png", (18,18))
         self._ico_folders  = load_icon("folders.png",  (18,18))
+        self._ico_logo     = load_icon("logo.png",     (34,34))
 
     # ────────────────────────────────────────────────────────
     def _build_ui(self):
         self._build_topbar()
         self._build_body()
+        self._bind_shortcuts()
+
+    def _bind_shortcuts(self):
+        """Горячие клавиши: F5/Ctrl+R — обновить версии, Ctrl+N — новая сборка,
+        Ctrl+L — консоль, F1 — настройки."""
+        for seq, fn in (("<F5>", self._refresh_versions_async),
+                        ("<Control-r>", self._refresh_versions_async),
+                        ("<Control-n>", self._open_create_dialog),
+                        ("<Control-l>", self._open_console),
+                        ("<F1>", self._open_global_settings)):
+            try:
+                self.bind(seq, lambda _e, f=fn: f())
+            except Exception:
+                pass
 
     # ── ТОПБАР ─────────────────────────────────────────────
     def _build_topbar(self):
-        self.topbar = ctk.CTkFrame(self, height=54,
+        self.topbar = ctk.CTkFrame(self, height=62,
                                    fg_color=T.PANEL, corner_radius=0)
         self.topbar.pack(fill="x")
         self.topbar.pack_propagate(False)
 
-        # лого
-        ctk.CTkLabel(self.topbar,
-            text="  ⛏  SCL",
-            font=font(16,"bold"), text_color=T.TEXT
-        ).pack(side="left", padx=(14,20))
+        # лого + название
+        ctk.CTkLabel(self.topbar, image=self._ico_logo, text=""
+                     ).pack(side="left", padx=(16,10))
+        brand = ctk.CTkFrame(self.topbar, fg_color="transparent")
+        brand.pack(side="left", padx=(0,18))
+        ctk.CTkLabel(brand, text="Simple Craft Launcher",
+                     font=font(14,"bold"), text_color=T.TEXT
+                     ).pack(anchor="w")
+        ctk.CTkLabel(brand, text=f"лаунчер v{self.VERSION}",
+                     font=font(10), text_color=T.MUTED
+                     ).pack(anchor="w")
 
-        def tb_btn(text, icon=None, cmd=None):
+        def tb_btn(text, icon=None, cmd=None, color=None, hover=None):
             return ctk.CTkButton(self.topbar,
                 text=text, image=icon,
                 compound="left" if icon else "center",
-                fg_color=T.CARD, hover_color=T.CARD_HOVER,
-                height=34, corner_radius=8, font=font(12),
+                fg_color=color or T.CARD, hover_color=hover or T.CARD_HOVER,
+                height=36, corner_radius=8, font=font(12),
                 command=cmd)
 
         tb_btn("Добавить", self._ico_add,
                cmd=self._open_create_dialog
-               ).pack(side="left", padx=4, pady=10)
+               ).pack(side="left", padx=4, pady=13)
 
         tb_btn("Настройки", self._ico_settings,
                cmd=self._open_global_settings
@@ -1303,13 +1446,24 @@ class App(ctk.CTk):
                cmd=lambda: open_folder(INSTANCES_DIR)
                ).pack(side="left", padx=4)
 
+        tb_btn("Консоль", None,
+               cmd=self._open_console
+               ).pack(side="left", padx=4)
 
-        # версия лаунчера (справа)
-        ctk.CTkLabel(self.topbar,
-            text=f"v{self.VERSION}",
-            text_color=T.MUTED, font=font(11)
-        ).pack(side="right", padx=16)
+        # быстрый выбор темы (справа)
+        self._theme_menu = ctk.CTkOptionMenu(self.topbar,
+            values=list(THEMES.keys()),
+            width=134, height=32, corner_radius=8,
+            font=font(11), dropdown_font=font(11),
+            fg_color=T.CARD, button_color=T.CARD_HOVER,
+            button_hover_color=T.CARD_BORDER, text_color=T.TEXT,
+            dropdown_fg_color=T.PANEL, dropdown_hover_color=T.CARD_HOVER,
+            dropdown_text_color=T.TEXT,
+            command=self._apply_theme)
+        self._theme_menu.set(T.NAME)
+        self._theme_menu.pack(side="right", padx=(8,16))
 
+        # версия Minecraft (справа от темы)
         self._mc_version_badge = ctk.CTkLabel(self.topbar,
             text=f"MC {default_minecraft_version()}",
             text_color=T.TEXT, font=font(11,"bold"),
@@ -1319,11 +1473,11 @@ class App(ctk.CTk):
 
     # ── BODY (sidebar + center) ─────────────────────────────
     def _build_body(self):
-        body = ctk.CTkFrame(self, fg_color="transparent")
-        body.pack(fill="both", expand=True)
+        self.body = ctk.CTkFrame(self, fg_color="transparent")
+        self.body.pack(fill="both", expand=True)
 
-        self._build_sidebar(body)
-        self._build_center(body)
+        self._build_sidebar(self.body)
+        self._build_center(self.body)
 
     # ── ПРАВЫЙ САЙДБАР ─────────────────────────────────────
     def _build_sidebar(self, parent):
@@ -1347,7 +1501,12 @@ class App(ctk.CTk):
 
         self._sb_time = ctk.CTkLabel(self.sidebar,
             text="", text_color=T.MUTED, font=font(10))
-        self._sb_time.pack(pady=(0,14))
+        self._sb_time.pack(pady=(0,4))
+
+        # счётчики содержимого сборки (моды / ресурспаки / шейдеры)
+        self._sb_content = ctk.CTkLabel(self.sidebar,
+            text="", text_color=T.MUTED, font=font(10))
+        self._sb_content.pack(pady=(0,14))
 
         # ── кнопки ─────────────────────────────────────────
         def sb_btn(text, color=None, hover=None, cmd=None, height=36):
@@ -1369,6 +1528,10 @@ class App(ctk.CTk):
                cmd=lambda: open_folder(
                    InstanceMgr.path(self.current_instance["name"])
                    if self.current_instance else INSTANCES_DIR)
+               ).pack(fill="x", padx=18, pady=2)
+
+        sb_btn("🧩  Открыть mods",
+               cmd=self._open_mods_folder
                ).pack(fill="x", padx=18, pady=2)
 
         sb_btn("✏  Переименовать",
@@ -1400,6 +1563,14 @@ class App(ctk.CTk):
         self._library_stats = ctk.CTkLabel(header,
             text="", text_color=T.MUTED, font=font(11))
         self._library_stats.pack(side="left", padx=(10,0), pady=(6,0))
+
+        ctk.CTkButton(header,
+            text="⟳  Обновить версии",
+            width=152, height=30, corner_radius=8,
+            fg_color=T.CARD, hover_color=T.CARD_HOVER,
+            font=font(11), text_color=T.TEXT,
+            command=self._refresh_versions_async
+        ).pack(side="right")
 
         # поиск + сортировка
         top = ctk.CTkFrame(self.center, fg_color="transparent")
@@ -1454,10 +1625,17 @@ class App(ctk.CTk):
             text_color=T.MUTED, font=font(10))
         self._lbl_acc_type.pack(side="left")
 
-        self._lbl_bottom_status = ctk.CTkLabel(bottom,
+        info = ctk.CTkFrame(bottom, fg_color="transparent")
+        info.pack(side="left", fill="x", expand=True, padx=18)
+
+        self._lbl_bottom_status = ctk.CTkLabel(info,
             text="Выберите сборку для запуска",
-            text_color=T.MUTED, font=font(11), anchor="w")
-        self._lbl_bottom_status.pack(side="left", fill="x", expand=True, padx=18)
+            text_color=T.TEXT, font=font(11), anchor="w")
+        self._lbl_bottom_status.pack(anchor="w")
+
+        self._lbl_env = ctk.CTkLabel(info,
+            text="", text_color=T.MUTED, font=font(9), anchor="w")
+        self._lbl_env.pack(anchor="w")
 
         # большая кнопка ИГРАТЬ
         self._btn_play = ctk.CTkButton(bottom,
@@ -1585,6 +1763,10 @@ class App(ctk.CTk):
         # иконка в сайдбаре
         ico = load_instance_icon(data["name"], (68,68))
         self._sb_icon.configure(image=ico)
+
+        # содержимое сборки + проверка установки в фоне
+        self._update_content_info(data)
+        self._check_installed_async(data)
 
         cfg = Settings.load()
         cfg["selected_instance"] = data["name"]
@@ -1893,17 +2075,144 @@ class App(ctk.CTk):
 
     def _on_settings_saved(self, cfg: dict):
         self.cfg = cfg
-        T.apply(cfg.get("theme","Dark Slate"))
+        theme_changed = cfg.get("theme") != T.NAME
+        T.apply(cfg.get("theme", "Dark Slate"))
+        self._rebuild_ui()        # тема и цвета применяются сразу, перезапуск не нужен
         log.log(f"Настройки сохранены. Тема: {cfg.get('theme')}")
-        messagebox.showinfo("SCL",
-            "Некоторые изменения вступят в силу при следующем запуске.\n"
-            "(Тема, шрифт, цветовая схема)")
+        if not theme_changed:
+            self._set_status("Настройки сохранены")
 
     def _open_console(self):
         if self.console_win and self.console_win.winfo_exists():
             self.console_win.focus()
             return
         self.console_win = ConsoleWindow(self)
+
+    # ────────────────────────────────────────────────────────
+    # ТЕМА / ИНТЕРФЕЙС
+    # ────────────────────────────────────────────────────────
+    def _apply_theme(self, name: str, save: bool = True):
+        """Мгновенно применяет тему ко всему окну (без перезапуска)."""
+        if not name or name not in THEMES:
+            return
+        T.apply(name)
+        if save:
+            self.cfg["theme"] = name
+            Settings.save(self.cfg)
+        self._rebuild_ui()
+        log.log(f"Тема применена: {name}")
+
+    def _rebuild_ui(self):
+        """Пересобирает окно заново с текущими цветами темы."""
+        selected = (self.current_instance or {}).get("name")
+        for frame in (getattr(self, "topbar", None), getattr(self, "body", None)):
+            try:
+                if frame is not None:
+                    frame.destroy()
+            except Exception:
+                pass
+
+        self.cards.clear()
+        self.configure(fg_color=T.BG)
+
+        self._build_ui()
+        self._reload_instances(select_name=selected)
+        self._update_env_async()              # строка Python/Java заполняется заново
+
+        if self.game_running:                 # не теряем состояние «игра идёт»
+            try:
+                self._btn_play.configure(text="  ИГРА ИДЁТ  ", fg_color=T.GREEN)
+                self._sb_play.configure(text="■  Остановить", fg_color=T.RED)
+            except Exception:
+                pass
+
+    def _set_status(self, text: str):
+        if hasattr(self, "_lbl_bottom_status"):
+            self._lbl_bottom_status.configure(text=text)
+
+    def _update_env_async(self):
+        """Показывает в нижней панели версии Python и Java (в фоне, чтобы не тормозить)."""
+        def worker():
+            java = ""
+            try:
+                core = CoreBridge._get_core()
+                if hasattr(core, "get_java_path"):
+                    java = core.get_java_path(self._prepare_launch_instance(
+                        self.current_instance or {"name": "Vanilla"}))
+            except Exception:
+                java = ""
+
+            if java and os.path.isfile(java):
+                folder = os.path.dirname(java)
+                if os.path.basename(folder).lower() in ("bin", ""):
+                    folder = os.path.dirname(folder)
+                label = os.path.basename(folder) or folder
+                if len(label) > 30:
+                    label = label[:29] + "…"
+            else:
+                label = "не найдена"
+
+            text = f"Python {platform.python_version()}  •  Java {label}"
+            self.after(0, self._set_env_text, text)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _set_env_text(self, text: str):
+        if hasattr(self, "_lbl_env"):
+            try:
+                self._lbl_env.configure(text=text)
+            except Exception:
+                pass
+
+    def _open_mods_folder(self):
+        if not self.current_instance:
+            open_folder(INSTANCES_DIR)
+            return
+        mods = os.path.join(InstanceMgr.path(self.current_instance["name"]), "mods")
+        try:
+            os.makedirs(mods, exist_ok=True)
+        except Exception:
+            pass
+        open_folder(mods)
+
+    def _update_content_info(self, data: dict):
+        """Сколько модов / ресурспаков / шейдеров / миров лежит в сборке."""
+        path = InstanceMgr.path(data.get("name", ""))
+        parts = []
+        for folder, label in (("mods", "моды"), ("resourcepacks", "ресурспаки"),
+                              ("shaderpacks", "шейдеры"), ("saves", "миры")):
+            try:
+                count = len([f for f in os.listdir(os.path.join(path, folder))
+                             if not f.startswith(".")])
+            except Exception:
+                count = 0
+            if count:
+                parts.append(f"{label}: {count}")
+        text = " • ".join(parts) if parts else "папки сборки пустые"
+        if hasattr(self, "_sb_content"):
+            self._sb_content.configure(text=text)
+
+    def _check_installed_async(self, data: dict):
+        """Проверяет установку версии в фоне и обновляет карточку."""
+        name = data.get("name")
+
+        def worker():
+            try:
+                installed = CoreBridge.is_installed(data)
+            except Exception:
+                installed = False
+            self.after(0, self._on_installed_checked, name, installed)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_installed_checked(self, name: str, installed: bool):
+        for card in self.cards:
+            if card.data.get("name") == name:
+                card.set_installed(installed)
+                break
+        if (not installed and self.current_instance
+                and self.current_instance.get("name") == name):
+            self._set_status("Сборка не установлена — нажмите «Играть», чтобы скачать")
 
     # ────────────────────────────────────────────────────────
     # ЗАКРЫТИЕ
