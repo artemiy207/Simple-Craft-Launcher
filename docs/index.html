@@ -15,7 +15,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/app_icon.ico">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="stylesheet" href="css/style.css">
+<!-- ВАЖНО: этот критичный стиль встроен в HTML специально. GitHub Pages кэширует
+     файлы на 10 минут, поэтому бывает, что HTML уже новый, а css/style.css ещё
+     старый. Тогда без этого правила лайтбокс остаётся поверх страницы: клики не
+     проходят, а вместо курсора видна «лупа» (cursor: zoom-out у .lightbox). -->
+<style>#lightbox[hidden] { display: none !important; }</style>
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -216,7 +221,7 @@
   <img id="lightbox-img" alt="">
 </div>
 
-<script src="js/app.js"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
 

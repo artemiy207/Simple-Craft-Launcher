@@ -84,20 +84,24 @@ function initLightbox() {
   const img = document.getElementById('lightbox-img');
   if (!box || !img) return;
 
-  // Страховка: пока не открыли — лайтбокс закрыт (в CSS у .lightbox display:flex,
-  // поэтому гасим его и атрибутом, и на старте, иначе он перекроет страницу).
+  // Страховка: пока не открыли — лайтбокс закрыт. Гасим тремя способами сразу
+  // (атрибут hidden + inline display + aria), чтобы он не перекрыл страницу,
+  // даже если внешний style.css пришёл из старого кэша.
   box.hidden = true;
+  box.style.display = 'none';
   box.setAttribute('aria-hidden', 'true');
 
   const open = (src, alt) => {
     img.src = src;
     img.alt = alt || 'Скриншот';
     box.hidden = false;
+    box.style.display = 'flex';
     box.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   };
   const close = () => {
     box.hidden = true;
+    box.style.display = 'none';
     box.setAttribute('aria-hidden', 'true');
     img.removeAttribute('src');   // пустая картинка не должна тянуть запрос и рисовать alt
     img.alt = '';
