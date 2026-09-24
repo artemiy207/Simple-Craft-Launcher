@@ -10,6 +10,15 @@ import os, sys, json, shutil, platform, subprocess, threading, webbrowser
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 
+# Безопасный вывод: если stdout/stderr перенаправлены (лог в файл, IDE),
+# символы вроде «→» иначе падают с UnicodeEncodeError в cp1251-консоли.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        if _stream is not None and hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # ─────────────────────────────────────────────────────────────
 # АВТОУСТАНОВКА
 # ─────────────────────────────────────────────────────────────
@@ -22,17 +31,33 @@ def _install_requirements():
         "minecraft-launcher-lib": "minecraft_launcher_lib"
     }
     missing = []
-    
+    upgrade = False
+
     for pip_name, mod_name in packages.items():
         try:
             __import__(mod_name)
         except ImportError:
             missing.append(pip_name)
-            
+
+    # minecraft-launcher-lib 8.0+ — единый API mod_loader
+    # (Fabric / Forge / NeoForge / Quilt) и скачивание Java-рантаймов
+    try:
+        import minecraft_launcher_lib as _mll
+        if not hasattr(_mll, "mod_loader"):
+            if "minecraft-launcher-lib" not in missing:
+                missing.append("minecraft-launcher-lib")
+            upgrade = True
+    except ImportError:
+        pass
+
     if missing:
-        print(f"[SCL] Установка отсутствующих библиотек: {missing}...")
+        print(f"[SCL] Установка отсутствующих библиотек: {missing}...", flush=True)
+        cmd = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check"]
+        if upgrade:
+            cmd.append("--upgrade")
+        cmd += missing
         try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", *missing, "-q"])
+            subprocess.check_call(cmd)
         except Exception as e:
             # Если pip упал, покажем красивое окошко вместо тихого краша
             import tkinter as tk
@@ -70,11 +95,29 @@ def asset(rel: str) -> str:
     return os.path.join(ROOT, rel)
 
 # ─────────────────────────────────────────────────────────────
+# JSON HELPERS
+# ─────────────────────────────────────────────────────────────
+def load_json(path, default):
+    try:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return default
+
+def save_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+# ─────────────────────────────────────────────────────────────
 # ВЕРСИИ MINECRAFT (список для UI)
 # ─────────────────────────────────────────────────────────────
+# Новая нумерация Minecraft: год.обновление.патч (26.3 / 26.1.2 / 1.21.4 …)
 MOJANG_VERSION_MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 DEFAULT_MINECRAFT_VERSIONS = [
-    "26.1.2", "26.1.1", "26.1",
+    "26.3", "26.2", "26.1.2", "26.1.1", "26.1",
     "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7",
     "1.21.6", "1.21.5",
     "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21",
@@ -93,10 +136,35 @@ DEFAULT_MINECRAFT_VERSIONS = [
     "1.8.9",  "1.8",
     "1.7.10", "1.7.2",
 ]
-MINECRAFT_VERSIONS = DEFAULT_MINECRAFT_VERSIONS.copy()
+VERSIONS_CACHE_FILE = os.path.join(DATA_DIR, "versions_cache.json")
+
+def _merge_versions(primary: list, fallback: list) -> list:
+    """Объединяет списки версий без дублей, сохраняя порядок (свежие — первыми)."""
+    result = []
+    for version in [*primary, *fallback]:
+        if version and version not in result:
+            result.append(version)
+    return result
+
+def load_versions_cache() -> list:
+    """Список версий с прошлого удачного обновления — чтобы работать офлайн."""
+    data = load_json(VERSIONS_CACHE_FILE, [])
+    if not isinstance(data, list):
+        return []
+    return [v for v in data if isinstance(v, str) and v]
+
+def save_versions_cache(versions: list) -> None:
+    try:
+        save_json(VERSIONS_CACHE_FILE, versions)
+    except Exception:
+        pass
+
+# Офлайн-кэш + встроенный список; после обращения к Mojang список заменится на актуальный
+MINECRAFT_VERSIONS = _merge_versions(load_versions_cache(), DEFAULT_MINECRAFT_VERSIONS)
 
 def default_minecraft_version() -> str:
-    return MINECRAFT_VERSIONS[0] if MINECRAFT_VERSIONS else "26.1.2"
+    """Самая свежая release-версия Minecraft (список обновляется с серверов Mojang)."""
+    return MINECRAFT_VERSIONS[0] if MINECRAFT_VERSIONS else "26.3"
 
 LOADERS = ["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"]
 
@@ -233,6 +301,9 @@ def load_instance_icon(instance_name: str, size=(56,56)) -> ctk.CTkImage:
 # LOGGER  (print + опциональный textbox)
 # ─────────────────────────────────────────────────────────────
 class Logger:
+    FILE      = os.path.join(DATA_DIR, "launcher.log")
+    FILE_LIMIT = 2 * 1024 * 1024       # 2 МБ, потом уходим в launcher.log.1
+
     def __init__(self):
         self._box = None
 
@@ -241,7 +312,24 @@ class Logger:
 
     def log(self, msg: str, level="INFO"):
         line = f"[{level}] {msg}"
-        print(line)
+
+        try:
+            print(line, flush=True)
+        except Exception:
+            pass
+
+        # Дублируем в файл — чтобы разбираться с ошибками после закрытия лаунчера
+        try:
+            if os.path.exists(self.FILE) and os.path.getsize(self.FILE) > self.FILE_LIMIT:
+                bak = self.FILE + ".1"
+                if os.path.exists(bak):
+                    os.remove(bak)
+                os.replace(self.FILE, bak)
+            with open(self.FILE, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except Exception:
+            pass
+
         if self._box:
             try:
                 self._box.configure(state="normal")
@@ -254,23 +342,6 @@ class Logger:
 log = Logger()
 
 # ─────────────────────────────────────────────────────────────
-# JSON HELPERS
-# ─────────────────────────────────────────────────────────────
-def load_json(path, default):
-    try:
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return default
-
-def save_json(path, data):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-
-# ─────────────────────────────────────────────────────────────
 # SETTINGS MANAGER
 # ─────────────────────────────────────────────────────────────
 class Settings:
@@ -279,6 +350,7 @@ class Settings:
         "theme":             "Dark Slate",
         "ram":               4096,
         "java_path":         "",
+        "auto_java":         True,
         "jvm_args":          "-XX:+UseG1GC -XX:+ParallelRefProcEnabled",
         "close_on_launch":   False,
         "selected_instance": None,
@@ -323,7 +395,8 @@ class AccountMgr:
         data = load_json(cls.FILE, [])
         # Защита: если файл битый или список пуст, создаем дефолт
         if not data or not isinstance(data, list):
-            data = [{"name": "Player", "type": "offline", "uuid": ""}]
+            data = [{"name": "Player", "type": "offline",
+                     "uuid": CoreBridge.offline_uuid("Player")}]
         return data
 
     @classmethod
@@ -332,12 +405,13 @@ class AccountMgr:
 
     @classmethod
     def add(cls, name: str, acc_type="offline") -> list:
-        import uuid
         accounts = cls.load()
         for a in accounts:
             if a["name"] == name:
                 raise Exception(f"Аккаунт «{name}» уже существует")
-        accounts.append({"name": name, "type": acc_type, "uuid": str(uuid.uuid4())})
+        # Стабильный offline-UUID: один и тот же ник — один и тот же игрок всегда
+        accounts.append({"name": name, "type": acc_type,
+                         "uuid": CoreBridge.offline_uuid(name)})
         cls.save(accounts)
         return accounts
 
@@ -346,7 +420,8 @@ class AccountMgr:
         accounts = [a for a in cls.load() if a["name"] != name]
         if not accounts:
             # Запрещаем удалять последний аккаунт подчистую (всегда должен быть 1)
-            accounts = [{"name": "Player", "type": "offline", "uuid": ""}]
+            accounts = [{"name": "Player", "type": "offline",
+                         "uuid": CoreBridge.offline_uuid("Player")}]
         cls.save(accounts)
         return accounts
 
@@ -427,6 +502,7 @@ class CoreBridge:
     Когда core/launcher_core.py будет реализован — UI трогать не нужно.
     """
     CORE_PATH = os.path.join(CORE_DIR, "launcher_core.py")
+    _MODULE   = None
 
     @classmethod
     def _ensure_stub(cls):
@@ -485,17 +561,22 @@ def fetch_versions() -> list:
 
     @classmethod
     def _get_core(cls):
-        cls._ensure_stub()
-        import importlib.util as ilu
-        spec = ilu.spec_from_file_location("launcher_core", cls.CORE_PATH)
-        mod  = ilu.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod
+        """Загружает core/launcher_core.py один раз и держит модуль в кэше."""
+        if cls._MODULE is None:
+            cls._ensure_stub()
+            import importlib.util as ilu
+            spec = ilu.spec_from_file_location("launcher_core", cls.CORE_PATH)
+            mod  = ilu.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            if hasattr(mod, "set_logger"):          # логи CORE → в окно «Консоль»
+                mod.set_logger(log.log)
+            cls._MODULE = mod
+        return cls._MODULE
 
     @classmethod
     def install(cls, instance_cfg: dict, progress_cb=None) -> bool:
         try:
-            return cls._get_core().install(instance_cfg, progress_cb)
+            return bool(cls._get_core().install(instance_cfg, progress_cb))
         except Exception as e:
             log.log(f"CORE install error: {e}", "ERROR")
             return False
@@ -509,6 +590,35 @@ def fetch_versions() -> list:
         except Exception as e:
             log.log(f"CORE installed check error: {e}", "WARN")
         return False
+
+    @classmethod
+    def get_last_error(cls) -> str:
+        """Текст последней ошибки CORE — показываем его пользователю."""
+        try:
+            core = cls._get_core()
+            if hasattr(core, "get_last_error"):
+                return str(core.get_last_error() or "")
+        except Exception:
+            pass
+        return ""
+
+    @classmethod
+    def offline_uuid(cls, name: str) -> str:
+        """UUID offline-аккаунта (md5 от 'OfflinePlayer:<ник>') — стабильный."""
+        try:
+            core = cls._get_core()
+            if hasattr(core, "offline_uuid"):
+                return core.offline_uuid(name)
+        except Exception as e:
+            log.log(f"CORE offline_uuid error: {e}", "WARN")
+
+        import hashlib
+        digest = bytearray(hashlib.md5(
+            ("OfflinePlayer:" + (name or "Player")).encode("utf-8")).digest())
+        digest[6] = (digest[6] & 0x0F) | 0x30
+        digest[8] = (digest[8] & 0x3F) | 0x80
+        h = digest.hex()
+        return f"{h[0:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:32]}"
 
     @classmethod
     def launch(cls, instance_cfg: dict, account: dict):
@@ -527,14 +637,24 @@ def fetch_versions() -> list:
             log.log(f"CORE versions error: {e}", "WARN")
             return []
 
+    @classmethod
+    def latest_release(cls) -> str:
+        """Самая свежая release-версия со стороны core (пусто — нет сети)."""
+        try:
+            core = cls._get_core()
+            if hasattr(core, "latest_release"):
+                return str(core.latest_release() or "")
+        except Exception as e:
+            log.log(f"CORE latest_release error: {e}", "WARN")
+        return ""
+
 CoreBridge._ensure_stub()
 
-def _merge_versions(primary: list, fallback: list) -> list:
-    result = []
-    for version in [*primary, *fallback]:
-        if version and version not in result:
-            result.append(version)
-    return result
+# Прогреваем core на старте, чтобы ошибки в нём были видны сразу (UI не ломаем)
+try:
+    CoreBridge._get_core()
+except Exception as _e:
+    log.log(f"Не удалось загрузить core/launcher_core.py: {_e}", "ERROR")
 
 def fetch_mojang_release_versions() -> list:
     try:
@@ -551,13 +671,16 @@ def fetch_mojang_release_versions() -> list:
         return []
 
 def refresh_minecraft_versions() -> tuple[bool, list]:
+    """Обновляет список версий с серверов Mojang; без сети — из офлайн-кэша."""
     global MINECRAFT_VERSIONS
     versions = fetch_mojang_release_versions()
     if not versions:
         versions = CoreBridge.fetch_versions()
     if not versions:
+        MINECRAFT_VERSIONS = _merge_versions(load_versions_cache(), DEFAULT_MINECRAFT_VERSIONS)
         return False, MINECRAFT_VERSIONS
     MINECRAFT_VERSIONS = _merge_versions(versions, DEFAULT_MINECRAFT_VERSIONS)
+    save_versions_cache(versions)
     return True, MINECRAFT_VERSIONS
 
 # ─────────────────────────────────────────────────────────────
@@ -1019,6 +1142,16 @@ class GlobalSettingsDialog(_BaseDialog):
             "-XX:+UseG1GC -XX:+ParallelRefProcEnabled"))
         self._jvm.pack(fill="x")
 
+        # ── Java: автоскачивание нужной версии ─────────────
+        self._auto_java_sw = ctk.CTkSwitch(scroll,
+            text="Скачивать нужную Java автоматически (если её нет в системе)",
+            font=font(13),
+            progress_color=T.ACCENT,
+            button_color=T.ACCENT, button_hover_color=T.ACCENT_H)
+        if self.cfg.get("auto_java", True):
+            self._auto_java_sw.select()
+        self._auto_java_sw.pack(anchor="w", pady=(8,0))
+
         # ── Закрывать лаунчер при запуске ─────────────────
         row("")
         self._close_sw = ctk.CTkSwitch(scroll,
@@ -1050,6 +1183,7 @@ class GlobalSettingsDialog(_BaseDialog):
             "theme":           self._theme.get(),
             "ram":             int(self._ram_slider.get()),
             "java_path":       self._java.get().strip(),
+            "auto_java":       self._auto_java_sw.get() == 1,
             "jvm_args":        self._jvm.get().strip(),
             "close_on_launch": self._close_sw.get() == 1,
             "discord_rpc":     self._discord_sw.get() == 1,
@@ -1111,6 +1245,7 @@ class App(ctk.CTk):
         self.current_instance: dict | None = None
         self.current_account: dict = AccountMgr.load()[0]
         self.game_proc        = None
+        self.game_reader      = None
         self.game_running     = False
         self.console_win      = None
         self.cards: list[InstanceCard] = []
@@ -1568,14 +1703,17 @@ class App(ctk.CTk):
 
     def _on_install_done(self, ok: bool):
         self._show_progress(False)
+        self._reload_instances()
         if ok:
             log.log("Установка завершена успешно")
-            messagebox.showinfo("SCL","Установка завершена!")
+            messagebox.showinfo("SCL", "Установка завершена!\nТеперь можно запускать игру.")
         else:
-            log.log("Установка не выполнена (core не реализован)", "WARN")
-            messagebox.showinfo("SCL",
-                "Логика установки ещё не реализована.\n"
-                "Открой core/launcher_core.py и реализуй функцию install()")
+            err = CoreBridge.get_last_error() or "неизвестная ошибка"
+            log.log(f"Установка не выполнена: {err}", "ERROR")
+            messagebox.showerror("SCL",
+                "Не удалось установить сборку.\n\n"
+                f"{err}\n\n"
+                "Подробности — в окне «Консоль» (кнопка в верхней панели).")
 
     # ────────────────────────────────────────────────────────
     # ЗАПУСК ИГРЫ
@@ -1597,6 +1735,8 @@ class App(ctk.CTk):
             inst["java_path"] = self.cfg.get("java_path", "")
         if not inst.get("jvm_args"):
             inst["jvm_args"] = self.cfg.get("jvm_args", "")
+        # автоскачивание Java нужной версии (выключается в настройках)
+        inst["auto_java"] = bool(self.cfg.get("auto_java", True))
         return inst
 
     def _play_game(self):
@@ -1632,29 +1772,45 @@ class App(ctk.CTk):
         self._sb_play.configure(text="▶  Играть", state="normal", fg_color=T.ACCENT)
 
         if not ok:
-            log.log("Автоустановка не удалась", "ERROR")
+            err = CoreBridge.get_last_error() or "неизвестная ошибка"
+            log.log(f"Автоустановка не удалась: {err}", "ERROR")
             messagebox.showerror("SCL",
-                "Не удалось установить игру автоматически.\n"
-                "Подробности смотри в консоли лаунчера.")
+                "Не удалось установить игру автоматически.\n\n"
+                f"{err}\n\n"
+                "Подробности — в окне «Консоль».")
             return
 
         log.log("Автоустановка завершена, запускаю игру")
         self._launch_installed(inst)
 
     def _launch_installed(self, inst: dict):
-        acc  = self.current_account
+        acc = self.current_account
         log.log(f"Запуск: {inst['name']} от {acc['name']}")
 
-        proc = CoreBridge.launch(inst, acc)
+        # запускаем в потоке: подбор/скачивание Java и старт Java-процесса
+        self._btn_play.configure(text="  ЗАПУСК...  ", state="disabled")
+        self._sb_play.configure(text="Запуск...", state="disabled", fg_color=T.ACCENT)
+
+        def worker():
+            proc = CoreBridge.launch(inst, acc)
+            self.after(0, self._on_launch_result, inst, proc)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_launch_result(self, inst: dict, proc):
+        self._btn_play.configure(state="normal")
 
         if proc is None:
-            messagebox.showinfo("SCL",
-                "Запуск игры пока не реализован.\n\n"
+            err = CoreBridge.get_last_error() or "не удалось запустить Java-процесс"
+            log.log(f"Запуск не выполнен: {err}", "ERROR")
+            self._btn_play.configure(text="  ИГРАТЬ  ", fg_color=T.ACCENT)
+            self._sb_play.configure(text="▶  Играть", state="normal", fg_color=T.ACCENT)
+            messagebox.showerror("SCL",
+                "Не удалось запустить игру.\n\n"
+                f"{err}\n\n"
                 f"Сборка:  {inst['name']}\n"
-                f"Версия:  {inst.get('loader','')} {inst.get('version','')}\n"
-                f"Аккаунт: {acc['name']}\n"
-                f"RAM:     {inst.get('ram',4096)} МБ\n\n"
-                "Реализуй функцию launch() в core/launcher_core.py")
+                f"Версия:  {inst.get('loader','')} {inst.get('version','')}\n\n"
+                "Подробности — в окне «Консоль».")
             return
 
         self.game_proc    = proc
@@ -1666,10 +1822,43 @@ class App(ctk.CTk):
         inst["last_played"] = datetime.datetime.now().isoformat(timespec="seconds")
         InstanceMgr.save_cfg(inst)
 
+        self._pump_output(proc, inst)
         threading.Thread(target=self._watch_proc, args=(proc,), daemon=True).start()
 
         if self.cfg.get("close_on_launch"):
             self.iconify()
+
+    def _pump_output(self, proc, inst: dict):
+        """Читает вывод игры и складывает его в окно «Консоль» + файл сборки."""
+        game_log = os.path.join(INSTANCES_DIR, inst["name"], "logs", "launcher-game.log")
+        try:
+            os.makedirs(os.path.dirname(game_log), exist_ok=True)
+        except Exception:
+            game_log = None
+
+        def reader():
+            try:
+                for raw in iter(proc.stdout.readline, ""):
+                    line = (raw or "").rstrip()
+                    if not line:
+                        continue
+                    log.log(f"[GAME] {line}")
+                    if game_log:
+                        try:
+                            with open(game_log, "a", encoding="utf-8") as f:
+                                f.write(line + "\n")
+                        except Exception:
+                            pass
+            except Exception as e:
+                log.log(f"Чтение вывода игры прервано: {e}", "WARN")
+            finally:
+                try:
+                    proc.stdout.close()
+                except Exception:
+                    pass
+
+        self.game_reader = threading.Thread(target=reader, daemon=True)
+        self.game_reader.start()
 
     def _watch_proc(self, proc):
         proc.wait()

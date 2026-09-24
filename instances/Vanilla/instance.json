@@ -1,6 +1,6 @@
 {
     "name": "Vanilla",
-    "version": "26.1.2",
+    "version": "26.3",
     "loader": "Vanilla",
     "ram": 4096,
     "java_path": "",

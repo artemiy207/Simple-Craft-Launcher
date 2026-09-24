@@ -1,0 +1,26 @@
+# aider / ИИ-хелперы
+.aider*
+.aider.tags.cache.v4/
+
+# Python
+__pycache__/
+*.py[cod]
+*.spec
+
+# Сборка лаунчера
+build/
+dist/
+
+# Логи и кэш лаунчера
+data/launcher.log*
+data/install_test.log
+instances/*/logs/
+instances/*/versions/
+instances/*/libraries/
+instances/*/assets/
+instances/*/runtime/
+instances/*/downloads/
+instances/*/crash-reports/
+instances/*/options.txt
+instances/*/*.log
+
