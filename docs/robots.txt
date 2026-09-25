@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://artemiy207.github.io/Simple-Craft-Launcher/sitemap.xml
